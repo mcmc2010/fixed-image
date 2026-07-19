@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fixed Image Editor</title>
+    <link rel="stylesheet" href="vendor/bootstrap-icons-1.13/bootstrap-icons.css">
+    <link rel="stylesheet" href="css/modern.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-logo">Fixed Image Editor</div>
+        <ul class="navbar-menu">
+            <li class="has-submenu">
+                <a href="#">文件</a>
+                <ul class="submenu">
+                    <li><a href="#" id="btn-open">打开文件</a></li>
+                    <li><a href="#" id="btn-export">导出为...</a></li>
+                    <li><a href="#" id="btn-export-selection">导出选区...</a></li>
+                    <li><a href="#" id="btn-exit">退出</a></li>
+                </ul>
+            </li>
+            <li class="has-submenu">
+                <a href="#">编辑</a>
+                <ul class="submenu">
+                    <li><a href="#" id="btn-restore"><i class="bi bi-arrow-counterclockwise"></i> 恢复原图</a></li>
+                </ul>
+            </li>
+            <li class="has-submenu">
+                <a href="#">工具</a>
+                <ul class="submenu">
+                    <li><a href="#" id="btn-resize"><i class="bi bi-arrows-angle-expand"></i> 调整大小</a></li>
+                    <li><a href="#" id="btn-select"><i class="bi bi-cursor"></i> 选择</a></li>
+                    <li class="has-submenu">
+                        <a href="#"><i class="bi bi-puzzle"></i> 插件</a>
+                        <ul class="submenu" id="plugins-list"></ul>
+                    </li>
+                </ul>
+            </li>
+            <li class="has-submenu">
+                <a href="#">关于</a>
+                <ul class="submenu">
+                    <li><a href="#" id="btn-version"><i class="bi bi-info-circle"></i> 版本</a></li>
+                </ul>
+            </li>
+        </ul>
+    </nav>
+
+    <div class="toolbar">
+        <button class="toolbar-btn" id="tb-open" title="打开文件">
+            <i class="bi bi-folder2-open"></i>
+        </button>
+        <button class="toolbar-btn" id="tb-save" title="保存">
+            <i class="bi bi-floppy"></i>
+        </button>
+        <div class="toolbar-separator"></div>
+        <button class="toolbar-btn" id="tb-zoom-in" title="放大">
+            <i class="bi bi-zoom-in"></i>
+        </button>
+        <button class="toolbar-btn" id="tb-zoom-out" title="缩小">
+            <i class="bi bi-zoom-out"></i>
+        </button>
+        <button class="toolbar-btn" id="tb-zoom-reset" title="重置缩放">
+            <i class="bi bi-aspect-ratio"></i>
+        </button>
+        <div class="toolbar-separator"></div>
+        <button class="toolbar-btn" id="tb-select" title="选择">
+            <i class="bi bi-cursor"></i>
+        </button>
+    </div>
+
+    <div class="content">
+        <div id="image-viewer" style="display:none;">
+            <img id="preview-img" src="" alt="预览">
+            <canvas id="select-canvas"></canvas>
+        </div>
+        <div id="welcome">
+            <h2>欢迎使用 Fixed Image Editor</h2>
+            <p>请通过 文件 → 打开文件 加载图片</p>
+        </div>
+    </div>
+
+    <div class="statusbar">
+        <span class="statusbar-left" id="status-text">就绪</span>
+        <span class="statusbar-center" id="status-size"></span>
+        <span class="statusbar-center" id="status-original" style="display:none; color:#999;"></span>
+        <span class="statusbar-right" id="status-zoom">100%</span>
+    </div>
+
+    <div id="versionModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <span>版本信息</span>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Fixed Image Editor</strong></p>
+                <p>版本: 1.0.0</p>
+                <p>基于 pywebview</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="resizeModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <span>调整图像大小</span>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>宽度</label>
+                    <input type="number" id="resize-width" min="1" max="10000">
+                    <span>px</span>
+                </div>
+                <div class="form-group">
+                    <label>高度</label>
+                    <input type="number" id="resize-height" min="1" max="10000">
+                    <span>px</span>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="resize-lock" checked>
+                        锁定宽高比
+                    </label>
+                </div>
+                <div class="form-actions">
+                    <button id="resize-ok" class="btn-primary">确定</button>
+                    <button id="resize-cancel" class="btn-secondary">取消</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="vendor/js/jquery-4.0.0.js"></script>
+    <script src="js/app-modern.js"></script>
+</body>
+</html>

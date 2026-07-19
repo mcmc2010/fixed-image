@@ -1,0 +1,1 @@
+https://github.com/hajimen/cefpython/releases/download/20241002/cefpython3_v66.1_for_python_3.12_unofficial-66.1-py3-none-win_amd64.whl
