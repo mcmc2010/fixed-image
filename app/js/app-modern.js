@@ -86,6 +86,12 @@ $('#btn-restore').on('click', function(e) {
     restoreOriginal();
 });
 
+$('#btn-remove-bg').on('click', function(e) {
+    e.preventDefault();
+    $('.has-submenu').removeClass('open');
+    showRemoveBgDialog();
+});
+
 $('#versionModal').on('click', function(e) {
     if ($(e.target).is('#versionModal') || $(e.target).is('.modal-close')) {
         $(this).removeClass('show');
@@ -277,6 +283,46 @@ $('#resize-cancel').on('click', function() {
 
 $('#resizeModal').on('click', function(e) {
     if ($(e.target).is('#resizeModal') || $(e.target).is('.modal-close')) {
+        $(this).removeClass('show');
+    }
+});
+
+function showRemoveBgDialog() {
+    var img = document.getElementById('preview-img');
+    if (!img.src) {
+        alert('请先打开图片');
+        return;
+    }
+    $('#removeBgModal').addClass('show');
+}
+
+$('#bg-color').on('input', function() {
+    $('#bg-color-hex').text($(this).val());
+});
+
+$('#bg-tolerance').on('input', function() {
+    $('#bg-tolerance-val').text($(this).val());
+});
+
+$('#remove-bg-ok').on('click', function() {
+    var color = $('#bg-color').val();
+    var tolerance = parseInt($('#bg-tolerance').val());
+    var src = $('#preview-img').attr('src');
+    window.pywebview.api.remove_background(src, color, tolerance).then(function(result) {
+        if (result) {
+            $('#preview-img').attr('src', result);
+            $('#removeBgModal').removeClass('show');
+            $('#status-text').text('已移除背景');
+        }
+    });
+});
+
+$('#remove-bg-cancel').on('click', function() {
+    $('#removeBgModal').removeClass('show');
+});
+
+$('#removeBgModal').on('click', function(e) {
+    if ($(e.target).is('#removeBgModal') || $(e.target).is('.modal-close')) {
         $(this).removeClass('show');
     }
 });

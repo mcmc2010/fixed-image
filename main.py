@@ -2,8 +2,13 @@ import webview
 import os
 import json
 import base64
+import hashlib
+import threading
+import numpy as np
 from io import BytesIO
 from PIL import Image
+from bottle import Bottle, static_file
+from common import remove_background
 
 class Api:
     def __init__(self):
@@ -11,7 +16,7 @@ class Api:
         self._cache_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'caches')
         self._plugins_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'plugins')
         os.makedirs(self._cache_dir, exist_ok=True)
-        self._original_data = None
+        self._current_md5 = None
 
     def set_window(self, window):
         self._window = window
@@ -53,12 +58,13 @@ class Api:
             file_path = result[0]
             with open(file_path, 'rb') as f:
                 raw_data = f.read()
-            self._original_data = raw_data
-            data = base64.b64encode(raw_data).decode('utf-8')
-            ext = os.path.splitext(file_path)[1].lower()
-            mime_map = {'.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp'}
-            mime = mime_map.get(ext, 'image/png')
-            return {'path': file_path, 'data': 'data:' + mime + ';base64,' + data}
+            md5 = hashlib.md5(raw_data).hexdigest()
+            cache_path = os.path.join(self._cache_dir, md5 + '.png')
+            if not os.path.exists(cache_path):
+                img = Image.open(BytesIO(raw_data))
+                img.save(cache_path, 'PNG')
+            self._current_md5 = md5
+            return {'path': file_path, 'data': 'http://127.0.0.1:39090/images/' + md5 + '.png'}
         return None
 
     def close(self):
@@ -86,11 +92,16 @@ class Api:
             return file_path
         return None
 
-    def do_export(self, data_url, file_path):
+    def do_export(self, image_src, file_path):
         ext = os.path.splitext(file_path)[1].lower()
-        header, encoded = data_url.split(',', 1)
-        img_data = base64.b64decode(encoded)
-        img = Image.open(BytesIO(img_data))
+        if image_src.startswith('http://127.0.0.1:39090/images/'):
+            md5 = image_src.split('/')[-1].replace('.png', '')
+            cache_path = os.path.join(self._cache_dir, md5 + '.png')
+            img = Image.open(cache_path)
+        else:
+            header, encoded = image_src.split(',', 1)
+            img_data = base64.b64decode(encoded)
+            img = Image.open(BytesIO(img_data))
         if ext in ('.jpg', '.jpeg'):
             img = img.convert('RGB')
             img.save(file_path, 'JPEG', quality=95)
@@ -159,11 +170,16 @@ class Api:
             return file_path
         return None
 
-    def do_export_selection(self, data_url, file_path, x=0, y=0, w=0, h=0):
+    def do_export_selection(self, image_src, file_path, x=0, y=0, w=0, h=0):
         ext = os.path.splitext(file_path)[1].lower()
-        header, encoded = data_url.split(',', 1)
-        img_data = base64.b64decode(encoded)
-        img = Image.open(BytesIO(img_data))
+        if image_src.startswith('http://127.0.0.1:39090/images/'):
+            md5 = image_src.split('/')[-1].replace('.png', '')
+            cache_path = os.path.join(self._cache_dir, md5 + '.png')
+            img = Image.open(cache_path)
+        else:
+            header, encoded = image_src.split(',', 1)
+            img_data = base64.b64decode(encoded)
+            img = Image.open(BytesIO(img_data))
         img_w, img_h = img.size
         x = max(0, min(x, img_w))
         y = max(0, min(y, img_h))
@@ -179,10 +195,15 @@ class Api:
             cropped.save(file_path, 'WEBP', quality=95)
         return file_path
 
-    def resize_image(self, data_url, width, height):
-        header, encoded = data_url.split(',', 1)
-        img_data = base64.b64decode(encoded)
-        img = Image.open(BytesIO(img_data))
+    def resize_image(self, image_src, width, height):
+        if image_src.startswith('http://127.0.0.1:39090/images/'):
+            md5 = image_src.split('/')[-1].replace('.png', '')
+            cache_path = os.path.join(self._cache_dir, md5 + '.png')
+            img = Image.open(cache_path)
+        else:
+            header, encoded = image_src.split(',', 1)
+            img_data = base64.b64decode(encoded)
+            img = Image.open(BytesIO(img_data))
         img = img.resize((width, height), Image.LANCZOS)
         buffer = BytesIO()
         img.save(buffer, format='PNG')
@@ -190,19 +211,36 @@ class Api:
         return 'data:image/png;base64,' + new_data
 
     def restore_original(self):
-        if self._original_data:
-            data = base64.b64encode(self._original_data).decode('utf-8')
-            return 'data:image/png;base64,' + data
+        if self._current_md5:
+            cache_path = os.path.join(self._cache_dir, self._current_md5 + '.png')
+            if os.path.exists(cache_path):
+                return 'http://127.0.0.1:39090/images/' + self._current_md5 + '.png'
         return None
 
+    def remove_background(self, image_src, color_hex, tolerance=10):
+        return remove_background(image_src, self._cache_dir, color_hex, tolerance)
+
 base_dir = os.path.dirname(os.path.abspath(__file__))
+cache_dir = os.path.join(base_dir, 'caches')
 html_path = os.path.join(base_dir, "app", "index.html")
+
+app = Bottle()
+
+@app.route('/images/<filename>')
+def serve_image(filename):
+    print(f'Serve: Image -> {filename}')
+    return static_file(filename, root=cache_dir)
+
+def start_image_server():
+    app.run(host='127.0.0.1', port=39090, quiet=True)
 
 api = Api()
 window = webview.create_window("Fixed Image Editor", url=html_path, width=1280, height=720, min_size=(1280, 720), js_api=api)
 api.set_window(window)
 
+threading.Thread(target=start_image_server, daemon=True).start()
+
 webview.start(gui='cef',
     # http_server=True, 
-    http_port=39080,      # 固定端口
+    http_port=39080,
     debug=False)

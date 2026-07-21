@@ -31,6 +31,7 @@
                 <ul class="submenu">
                     <li><a href="#" id="btn-resize"><i class="bi bi-arrows-angle-expand"></i> 调整大小</a></li>
                     <li><a href="#" id="btn-select"><i class="bi bi-cursor"></i> 选择</a></li>
+                    <li><a href="#" id="btn-remove-bg"><i class="bi bi-eraser"></i> 移除背景</a></li>
                     <li class="has-submenu">
                         <a href="#"><i class="bi bi-puzzle"></i> 插件</a>
                         <ul class="submenu" id="plugins-list"></ul>
@@ -71,7 +72,9 @@
 
     <div class="content">
         <div id="image-viewer" style="display:none;">
-            <img id="preview-img" src="" alt="预览">
+            <div id="image-wrapper">
+                <img id="preview-img" src="" alt="预览">
+            </div>
             <canvas id="select-canvas"></canvas>
         </div>
         <div id="welcome">
@@ -127,6 +130,31 @@
                 <div class="form-actions">
                     <button id="resize-ok" class="btn-primary">确定</button>
                     <button id="resize-cancel" class="btn-secondary">取消</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="removeBgModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <span>移除背景</span>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>颜色</label>
+                    <input type="color" id="bg-color" value="#ffffff">
+                    <span id="bg-color-hex">#ffffff</span>
+                </div>
+                <div class="form-group">
+                    <label>容差</label>
+                    <input type="range" id="bg-tolerance" min="0" max="128" value="10">
+                    <span id="bg-tolerance-val">10</span>
+                </div>
+                <div class="form-actions">
+                    <button id="remove-bg-ok" class="btn-primary">确定</button>
+                    <button id="remove-bg-cancel" class="btn-secondary">取消</button>
                 </div>
             </div>
         </div>
