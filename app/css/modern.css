@@ -95,7 +95,10 @@ body {
     justify-content: space-between;
     align-items: center;
 }
-.statusbar-center { text-align: center; margin: 0 10px; }
+.statusbar-center { display: flex; align-items: center; gap: 10px; }
+#progress-bar { display: flex; align-items: center; gap: 6px; background: #e0e0e0; border-radius: 4px; padding: 2px 6px; min-width: 150px; }
+#progress-fill { height: 12px; background: #1a73e8; border-radius: 2px; width: 0; transition: width 0.2s; }
+#progress-text { font-size: 11px; min-width: 30px; text-align: right; }
 
 .modal-overlay {
     position: fixed; top: 0; left: 0; right: 0; bottom: 0;

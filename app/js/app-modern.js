@@ -12,6 +12,21 @@ $(document).on('click', function(e) {
     }
 });
 
+function showProgress(text) {
+    $('#progress-bar').show();
+    updateProgress(0, text);
+}
+
+function updateProgress(percent, text) {
+    $('#progress-fill').css('width', percent + '%');
+    $('#progress-text').text(text || (percent + '%'));
+}
+
+function hideProgress() {
+    $('#progress-bar').hide();
+    $('#progress-fill').css('width', '0');
+}
+
 var pluginsLoaded = false;
 
 window.addEventListener('pywebviewready', function() {
@@ -26,7 +41,18 @@ window.addEventListener('pywebviewready', function() {
             plugins.forEach(function(p) {
                 var label = p.name;
                 if (p.version) label += ' v' + p.version;
-                $list.append('<li><a href="#" class="plugin-item" data-name="' + p.name + '" title="' + (p.description || '') + '"><i class="bi bi-box"></i> ' + label + '</a></li>');
+                if (p.tools && p.tools.length > 0) {
+                    var $li = $('<li class="has-submenu"></li>');
+                    $li.append('<a href="#"><i class="bi bi-box"></i> ' + label + '</a>');
+                    var $sub = $('<ul class="submenu"></ul>');
+                    p.tools.forEach(function(tool) {
+                        $sub.append('<li><a href="#" class="plugin-tool" data-plugin="' + p.name + '" data-tool="' + tool.name + '" title="' + (tool.description || '') + '"><i class="bi bi-gear"></i> ' + tool.name + '</a></li>');
+                    });
+                    $li.append($sub);
+                    $list.append($li);
+                } else {
+                    $list.append('<li><a href="#" class="plugin-item" data-name="' + p.name + '" title="' + (p.description || '') + '"><i class="bi bi-box"></i> ' + label + '</a></li>');
+                }
             });
         }
     });
@@ -43,6 +69,110 @@ $(document).on('click', '.plugin-item', function(e) {
             }
         });
     }, 100);
+});
+
+$(document).on('click', '.plugin-tool', function(e) {
+    e.preventDefault();
+    $('.has-submenu').removeClass('open');
+    var plugin = $(this).data('plugin');
+    var tool = $(this).data('tool');
+    
+    window.pywebview.api.get_tool_info(plugin, tool).then(function(info) {
+        if (info && info.params && info.params.length > 0) {
+            showPluginParamsDialog(plugin, tool, info.params);
+        } else {
+            executePluginTool(plugin, tool, {});
+        }
+    });
+});
+
+function showPluginParamsDialog(plugin, tool, params) {
+    $('#plugin-params-title').text(tool + ' - 参数设置');
+    var $form = $('#plugin-params-form');
+    $form.empty();
+    
+    params.forEach(function(p) {
+        var $group = $('<div class="form-group"></div>');
+        $group.append('<label>' + p.label + '</label>');
+        
+        if (p.type === 'range') {
+            var $input = $('<input type="range" id="param-' + p.name + '" min="' + p.min + '" max="' + p.max + '" value="' + p.default + '">');
+            var $val = $('<span>' + p.default + '</span>');
+            $input.on('input', function() { $val.text($(this).val()); });
+            $group.append($input).append($val);
+        } else if (p.type === 'number') {
+            $group.append('<input type="number" id="param-' + p.name + '" min="' + (p.min || 0) + '" max="' + (p.max || 9999) + '" value="' + p.default + '">');
+        } else if (p.type === 'color') {
+            $group.append('<input type="color" id="param-' + p.name + '" value="' + p.default + '">');
+        }
+        
+        $form.append($group);
+    });
+    
+    $('#pluginParamsModal').addClass('show');
+    
+    $('#plugin-params-ok').off('click').on('click', function() {
+        var values = {};
+        params.forEach(function(p) {
+            values[p.name] = $('#param-' + p.name).val();
+        });
+        $('#pluginParamsModal').removeClass('show');
+        executePluginTool(plugin, tool, values);
+    });
+}
+
+function executePluginTool(plugin, tool, params) {
+    showProgress('处理中...');
+    window.pywebview.api.run_plugin_tool(plugin, tool, JSON.stringify(params)).then(function(result) {
+        if (result) {
+            if (result.image) {
+                $('#preview-img').attr('src', result.image);
+            } else {
+                $('#preview-img').attr('src', result);
+            }
+            if (result.mask_url) {
+                showMaskOverlay(result.mask_url);
+            } else {
+                hideMaskOverlay();
+            }
+            $('#status-text').text('已执行: ' + tool);
+        }
+        hideProgress();
+    });
+}
+
+var currentMaskUrl = null;
+
+function showMaskOverlay(maskUrl) {
+    currentMaskUrl = maskUrl;
+    var $overlay = $('#mask-overlay');
+    if ($overlay.length === 0) {
+        $overlay = $('<img id="mask-overlay">').css({
+            'position': 'absolute',
+            'top': '0',
+            'left': '0',
+            'width': '100%',
+            'height': '100%',
+            'pointer-events': 'none'
+        });
+        $('#image-wrapper').append($overlay);
+    }
+    $overlay.attr('src', maskUrl).show();
+}
+
+function hideMaskOverlay() {
+    $('#mask-overlay').hide();
+    currentMaskUrl = null;
+}
+
+$('#plugin-params-cancel').on('click', function() {
+    $('#pluginParamsModal').removeClass('show');
+});
+
+$('#pluginParamsModal').on('click', function(e) {
+    if ($(e.target).is('#pluginParamsModal') || $(e.target).is('.modal-close')) {
+        $(this).removeClass('show');
+    }
 });
 
 $('#btn-open').on('click', function(e) {
@@ -320,12 +450,14 @@ $('#remove-bg-ok').on('click', function() {
     var color = $('#bg-color').val();
     var tolerance = parseInt($('#bg-tolerance').val());
     var src = $('#preview-img').attr('src');
+    $('#removeBgModal').removeClass('show');
+    showProgress('处理中...');
     window.pywebview.api.remove_background(src, color, tolerance).then(function(result) {
         if (result) {
             $('#preview-img').attr('src', result);
-            $('#removeBgModal').removeClass('show');
             $('#status-text').text('已移除背景');
         }
+        hideProgress();
     });
 });
 
@@ -379,12 +511,14 @@ $('#feather-ok').on('click', function() {
     var radius = parseInt($('#feather-radius').val());
     var blur = parseInt($('#feather-blur').val());
     var src = $('#preview-img').attr('src');
+    $('#featherModal').removeClass('show');
+    showProgress('处理中...');
     window.pywebview.api.feather_image(src, radius, blur).then(function(result) {
         if (result) {
             $('#preview-img').attr('src', result);
-            $('#featherModal').removeClass('show');
             $('#status-text').text('已羽化');
         }
+        hideProgress();
     });
 });
 

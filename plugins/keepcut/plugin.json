@@ -1,0 +1,26 @@
+{
+    "name": "KeepCut",
+    "version": "1.0.0",
+    "description": "智能抠图插件",
+    "author": "Allen",
+    "tools": [
+          { 
+            "name": "Subject", 
+            "description": "自动检测并选择主体",
+            "script": "subject.py",
+            "params": [
+              { "name": "tolerance", "label": "容差", "type": "range", "min": 1, "max": 100, "default": 30 }
+            ]
+          },
+          { 
+            "name": "Keep Inside", 
+            "description": "保护选区内的像素",
+            "script": "keep_inside.py"
+          },
+          { 
+            "name": "Clear Outside", 
+            "description": "清除选区外的像素",
+            "script": "clear_outside.py"
+          }
+    ]
+}

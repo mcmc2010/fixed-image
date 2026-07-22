@@ -87,8 +87,14 @@
 
     <div class="statusbar">
         <span class="statusbar-left" id="status-text">就绪</span>
-        <span class="statusbar-center" id="status-size"></span>
-        <span class="statusbar-center" id="status-original" style="display:none; color:#999;"></span>
+        <div class="statusbar-center">
+            <span id="status-size"></span>
+            <span id="status-original" style="display:none; color:#999;"></span>
+            <div id="progress-bar" style="display:none;">
+                <div id="progress-fill"></div>
+                <span id="progress-text">0%</span>
+            </div>
+        </div>
         <span class="statusbar-right" id="status-zoom">100%</span>
     </div>
 
@@ -157,6 +163,22 @@
                 <div class="form-actions">
                     <button id="remove-bg-ok" class="btn-primary">确定</button>
                     <button id="remove-bg-cancel" class="btn-secondary">取消</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="pluginParamsModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <span id="plugin-params-title">参数设置</span>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="plugin-params-form"></div>
+                <div class="form-actions">
+                    <button id="plugin-params-ok" class="btn-primary">确定</button>
+                    <button id="plugin-params-cancel" class="btn-secondary">取消</button>
                 </div>
             </div>
         </div>

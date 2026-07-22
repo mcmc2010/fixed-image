@@ -8,7 +8,7 @@ import numpy as np
 from io import BytesIO
 from PIL import Image
 from bottle import Bottle, static_file
-from common import remove_background, feather_image, get_plugins, run_plugin
+from common import remove_background, feather_image, get_plugins, get_tool_info, run_plugin, run_plugin_tool
 
 class Api:
     def __init__(self):
@@ -24,11 +24,20 @@ class Api:
     def get_plugins(self):
         return get_plugins(self._plugins_dir)
 
+    def get_tool_info(self, plugin_name, tool_name):
+        return get_tool_info(self._plugins_dir, plugin_name, tool_name)
+
     def check_file_exists(self, file_path):
         return os.path.exists(file_path)
 
     def run_plugin(self, plugin_name):
         return run_plugin(self._plugins_dir, plugin_name)
+
+    def run_plugin_tool(self, plugin_name, tool_name, params_json='{}'):
+        import json
+        src = self._window.evaluate_js('document.getElementById("preview-img").src')
+        params = json.loads(params_json)
+        return run_plugin_tool(self._plugins_dir, plugin_name, tool_name, src, self._cache_dir, params)
 
     def open_file(self):
         result = self._window.create_file_dialog(
