@@ -86,10 +86,22 @@ $('#btn-restore').on('click', function(e) {
     restoreOriginal();
 });
 
+$('#btn-bg').on('click', function(e) {
+    e.preventDefault();
+    $('.has-submenu').removeClass('open');
+    $('#bgModal').addClass('show');
+});
+
 $('#btn-remove-bg').on('click', function(e) {
     e.preventDefault();
     $('.has-submenu').removeClass('open');
     showRemoveBgDialog();
+});
+
+$('#btn-feather').on('click', function(e) {
+    e.preventDefault();
+    $('.has-submenu').removeClass('open');
+    showFeatherDialog();
 });
 
 $('#versionModal').on('click', function(e) {
@@ -323,6 +335,65 @@ $('#remove-bg-cancel').on('click', function() {
 
 $('#removeBgModal').on('click', function(e) {
     if ($(e.target).is('#removeBgModal') || $(e.target).is('.modal-close')) {
+        $(this).removeClass('show');
+    }
+});
+
+$('.bg-option').on('click', function() {
+    $('.bg-option').removeClass('active');
+    $(this).addClass('active');
+    var bg = $(this).data('bg');
+    var $wrapper = $('#image-wrapper');
+    $wrapper.removeAttr('style');
+    if (bg === 'checkerboard') {
+        $wrapper.addClass('checkerboard-bg');
+    } else {
+        $wrapper.removeClass('checkerboard-bg').css('background-color', bg);
+    }
+});
+
+$('#bgModal').on('click', function(e) {
+    if ($(e.target).is('#bgModal') || $(e.target).is('.modal-close')) {
+        $(this).removeClass('show');
+    }
+});
+
+function showFeatherDialog() {
+    var img = document.getElementById('preview-img');
+    if (!img.src) {
+        alert('请先打开图片');
+        return;
+    }
+    $('#featherModal').addClass('show');
+}
+
+$('#feather-radius').on('input', function() {
+    $('#feather-radius-val').text($(this).val());
+});
+
+$('#feather-blur').on('input', function() {
+    $('#feather-blur-val').text($(this).val());
+});
+
+$('#feather-ok').on('click', function() {
+    var radius = parseInt($('#feather-radius').val());
+    var blur = parseInt($('#feather-blur').val());
+    var src = $('#preview-img').attr('src');
+    window.pywebview.api.feather_image(src, radius, blur).then(function(result) {
+        if (result) {
+            $('#preview-img').attr('src', result);
+            $('#featherModal').removeClass('show');
+            $('#status-text').text('已羽化');
+        }
+    });
+});
+
+$('#feather-cancel').on('click', function() {
+    $('#featherModal').removeClass('show');
+});
+
+$('#featherModal').on('click', function(e) {
+    if ($(e.target).is('#featherModal') || $(e.target).is('.modal-close')) {
         $(this).removeClass('show');
     }
 });

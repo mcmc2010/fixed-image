@@ -8,7 +8,7 @@ import numpy as np
 from io import BytesIO
 from PIL import Image
 from bottle import Bottle, static_file
-from common import remove_background
+from common import remove_background, feather_image, get_plugins, run_plugin
 
 class Api:
     def __init__(self):
@@ -22,31 +22,13 @@ class Api:
         self._window = window
 
     def get_plugins(self):
-        plugins = []
-        if os.path.exists(self._plugins_dir):
-            for name in os.listdir(self._plugins_dir):
-                plugin_path = os.path.join(self._plugins_dir, name)
-                if os.path.isdir(plugin_path):
-                    info_path = os.path.join(plugin_path, 'plugin.json')
-                    info = {'name': name, 'version': '', 'description': ''}
-                    if os.path.exists(info_path):
-                        with open(info_path, 'r', encoding='utf-8') as f:
-                            data = json.load(f)
-                            info.update(data)
-                    plugins.append(info)
-                    print(f'已加载插件: {info["name"]} v{info["version"]}')
-        return plugins
+        return get_plugins(self._plugins_dir)
 
     def check_file_exists(self, file_path):
         return os.path.exists(file_path)
 
     def run_plugin(self, plugin_name):
-        plugin_path = os.path.join(self._plugins_dir, plugin_name)
-        main_js = os.path.join(plugin_path, 'main.js')
-        if os.path.exists(main_js):
-            print(f'执行插件: {plugin_name}')
-            return f'执行插件: {plugin_name}'
-        return None
+        return run_plugin(self._plugins_dir, plugin_name)
 
     def open_file(self):
         result = self._window.create_file_dialog(
@@ -219,6 +201,9 @@ class Api:
 
     def remove_background(self, image_src, color_hex, tolerance=10):
         return remove_background(image_src, self._cache_dir, color_hex, tolerance)
+
+    def feather_image(self, image_src, radius=10, blur=3):
+        return feather_image(image_src, self._cache_dir, radius, blur)
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
 cache_dir = os.path.join(base_dir, 'caches')

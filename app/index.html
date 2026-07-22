@@ -24,6 +24,7 @@
                 <a href="#">编辑</a>
                 <ul class="submenu">
                     <li><a href="#" id="btn-restore"><i class="bi bi-arrow-counterclockwise"></i> 恢复原图</a></li>
+                    <li><a href="#" id="btn-bg"><i class="bi bi-palette"></i> 背景</a></li>
                 </ul>
             </li>
             <li class="has-submenu">
@@ -32,6 +33,7 @@
                     <li><a href="#" id="btn-resize"><i class="bi bi-arrows-angle-expand"></i> 调整大小</a></li>
                     <li><a href="#" id="btn-select"><i class="bi bi-cursor"></i> 选择</a></li>
                     <li><a href="#" id="btn-remove-bg"><i class="bi bi-eraser"></i> 移除背景</a></li>
+                    <li><a href="#" id="btn-feather"><i class="bi bi-droplet"></i> 羽化</a></li>
                     <li class="has-submenu">
                         <a href="#"><i class="bi bi-puzzle"></i> 插件</a>
                         <ul class="submenu" id="plugins-list"></ul>
@@ -72,7 +74,7 @@
 
     <div class="content">
         <div id="image-viewer" style="display:none;">
-            <div id="image-wrapper">
+            <div id="image-wrapper" class="checkerboard-bg">
                 <img id="preview-img" src="" alt="预览">
             </div>
             <canvas id="select-canvas"></canvas>
@@ -155,6 +157,66 @@
                 <div class="form-actions">
                     <button id="remove-bg-ok" class="btn-primary">确定</button>
                     <button id="remove-bg-cancel" class="btn-secondary">取消</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="featherModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <span>羽化</span>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>半径</label>
+                    <input type="range" id="feather-radius" min="1" max="100" value="10">
+                    <span id="feather-radius-val">10</span>
+                    <span>px</span>
+                </div>
+                <div class="form-group">
+                    <label>模糊</label>
+                    <input type="range" id="feather-blur" min="0" max="50" value="3">
+                    <span id="feather-blur-val">3</span>
+                    <span>px</span>
+                </div>
+                <div class="form-actions">
+                    <button id="feather-ok" class="btn-primary">确定</button>
+                    <button id="feather-cancel" class="btn-secondary">取消</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="bgModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <span>设置背景</span>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="bg-options">
+                    <div class="bg-option active" data-bg="checkerboard" title="透明">
+                        <div class="bg-preview checkerboard"></div>
+                        <span>透明</span>
+                    </div>
+                    <div class="bg-option" data-bg="#ffffff" title="白色">
+                        <div class="bg-preview" style="background:#ffffff"></div>
+                        <span>白色</span>
+                    </div>
+                    <div class="bg-option" data-bg="#000000" title="黑色">
+                        <div class="bg-preview" style="background:#000000"></div>
+                        <span>黑色</span>
+                    </div>
+                    <div class="bg-option" data-bg="#808080" title="灰色">
+                        <div class="bg-preview" style="background:#808080"></div>
+                        <span>灰色</span>
+                    </div>
+                    <div class="bg-option" data-bg="#f0f0f0" title="浅灰">
+                        <div class="bg-preview" style="background:#f0f0f0"></div>
+                        <span>浅灰</span>
+                    </div>
                 </div>
             </div>
         </div>
