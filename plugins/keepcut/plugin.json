@@ -18,9 +18,9 @@
             "script": "keep_inside.py"
           },
           { 
-            "name": "Clear Outside", 
-            "description": "清除选区外的像素",
-            "script": "clear_outside.py"
+            "name": "Clear Inside", 
+            "description": "清除选区内的像素",
+            "script": "clear_inside.py"
           }
     ]
 }

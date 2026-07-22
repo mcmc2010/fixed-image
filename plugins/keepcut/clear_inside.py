@@ -16,16 +16,20 @@ def run(image_src, cache_dir):
     if not os.path.exists(mask_path):
         print('蒙版不存在，请先执行 Subject')
         return None
-    
+
+    print('Test')
     img = Image.open(cache_path).convert('RGBA')
     mask = Image.open(mask_path).convert('RGBA')
     
     data = np.array(img)
     mask_data = np.array(mask)
     
-    background_mask = mask_data[:,:,3] <= 128
+    # 原mask图的alpha通道是128，如果要检测是否是mask区域
+    # 必须大于等于128
+    background_mask = mask_data[:,:,3] >= 128
     
     alpha = data[:,:,3].astype(float)
+    # 做了一次alpha归零处理。
     alpha[background_mask] = 0
     data[:,:,3] = alpha.astype(np.uint8)
     

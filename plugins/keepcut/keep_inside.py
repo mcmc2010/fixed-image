@@ -23,7 +23,9 @@ def run(image_src, cache_dir):
     data = np.array(img)
     mask_data = np.array(mask)
     
-    subject_mask = mask_data[:,:,3] > 128
+    # 原mask图的alpha通道是128.如果要剔除选择区域外的
+    # 必须大于等于128
+    subject_mask = mask_data[:,:,3] >= 128
     
     alpha = data[:,:,3].astype(float)
     alpha = alpha * subject_mask.astype(float)
