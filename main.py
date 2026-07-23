@@ -275,4 +275,4 @@ threading.Thread(target=start_image_server, daemon=True).start()
 webview.start(gui='cef',
     # http_server=True, 
     http_port=39080,
-    debug=True)
+    debug=False)
