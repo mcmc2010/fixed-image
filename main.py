@@ -1,5 +1,6 @@
 import webview
 import os
+import sys
 import json
 import base64
 import hashlib
@@ -214,10 +215,47 @@ class Api:
     def feather_image(self, image_src, radius=10, blur=3):
         return feather_image(image_src, self._cache_dir, radius, blur)
 
+
+#
 base_dir = os.path.dirname(os.path.abspath(__file__))
 cache_dir = os.path.join(base_dir, 'caches')
 html_path = os.path.join(base_dir, "app", "index.html")
 
+# 兼容代码
+# cef.DpiAware.EnableHighDpiSupport 在新版本中已经被移除
+# 123.0.x 以后，不再需要应用层指定是否开启DPI
+_native_initialize = None
+_noop = staticmethod(lambda: None)
+# 在 CEF 视图里打开 chrome://gpu
+# --disable-gpu, --disable-gpu-sandbox, --in-process-gpu
+def _hook_initialize(settings=None, commandLineSwitches=None, **kw):
+    """
+    修正核心：用关键字参数传合并后的开关，绝对不和原参数冲突
+    """
+    # 合并命令行开关：优先用我们新增的，再合并 pywebview 传来的原有开关
+    merged_switches = dict(commandLineSwitches or {})
+    merged_switches.setdefault("disable-gpu-sandbox", "")  # 关GPU沙箱，防独显崩溃
+    merged_switches.setdefault("in-process-gpu", "")     # 如果还有GPU崩溃，解开这行
+    # 关键：用关键字参数传递，避免位置参数重复传值
+    return _native_initialize(
+        settings=settings,
+        commandLineSwitches=merged_switches,
+        **kw
+    )
+
+if sys.platform == "win32":
+    from cefpython3 import cefpython as _cef
+    _cef_version = _cef.GetVersion().get("version", "0")   # 形如 "123.0"
+    _cef_major = int(str(_cef_version).split(".")[0])
+    print(f"Currently detected CEF version: {_cef_version}")
+    if _cef_major >= 120 :
+        _cef.DpiAware.EnableHighDpiSupport = _noop
+        _cef.DpiAware.SetProcessDpiAware = _noop
+
+        _native_initialize = _cef.Initialize
+        _cef.Initialize = _hook_initialize
+
+#
 app = Bottle()
 
 @app.route('/images/<filename>')
@@ -237,4 +275,4 @@ threading.Thread(target=start_image_server, daemon=True).start()
 webview.start(gui='cef',
     # http_server=True, 
     http_port=39080,
-    debug=False)
+    debug=True)

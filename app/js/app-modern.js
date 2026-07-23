@@ -204,6 +204,12 @@ $('#btn-version').on('click', function(e) {
     $('#versionModal').addClass('show');
 });
 
+$('#btn-gpu').on('click', function(e) {
+    e.preventDefault();
+    $('.has-submenu').removeClass('open');
+    window.open('chrome://gpu', '_blank');
+});
+
 $('#btn-resize').on('click', function(e) {
     e.preventDefault();
     $('.has-submenu').removeClass('open');
