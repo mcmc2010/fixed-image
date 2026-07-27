@@ -17,9 +17,14 @@
 - 插件系统：可扩展功能
 
 ## 运行
+下载windows平台对应WHL文件：
+https://github.com/mcmc2010/cefpython/releases
 
 ```bash
 pip install -r requirements.txt
+# 安装 CEF 123.0 必备GUI组件
+pip install ./cefpython3-123.0-cp312-none-win_amd64.whl
+# 运行
 python main.py
 ```
 
