@@ -104,6 +104,13 @@ function showPluginParamsDialog(plugin, tool, params) {
             $group.append('<input type="number" id="param-' + p.name + '" min="' + (p.min || 0) + '" max="' + (p.max || 9999) + '" value="' + p.default + '">');
         } else if (p.type === 'color') {
             $group.append('<input type="color" id="param-' + p.name + '" value="' + p.default + '">');
+        } else if (p.type === 'select') {
+            var $select = $('<select id="param-' + p.name + '"></select>');
+            p.options.forEach(function(opt) {
+                var label = opt === 'auto' ? '自动' : opt === 'manual' ? '手动' : opt;
+                $select.append('<option value="' + opt + '"' + (opt === p.default ? ' selected' : '') + '>' + label + '</option>');
+            });
+            $group.append($select);
         }
         
         $form.append($group);
@@ -134,6 +141,9 @@ function executePluginTool(plugin, tool, params) {
                 showMaskOverlay(result.mask_url);
             } else {
                 hideMaskOverlay();
+            }
+            if (result.detected_color) {
+                $('#param-color').val(result.detected_color);
             }
             $('#status-text').text('已执行: ' + tool);
         }
@@ -214,6 +224,18 @@ $('#btn-resize').on('click', function(e) {
     e.preventDefault();
     $('.has-submenu').removeClass('open');
     showResizeDialog();
+});
+
+$('#btn-flip-h').on('click', function(e) {
+    e.preventDefault();
+    $('.has-submenu').removeClass('open');
+    flipImage('horizontal');
+});
+
+$('#btn-flip-v').on('click', function(e) {
+    e.preventDefault();
+    $('.has-submenu').removeClass('open');
+    flipImage('vertical');
 });
 
 $('#btn-restore').on('click', function(e) {
@@ -542,6 +564,7 @@ function restoreOriginal() {
     if (window.pywebview) {
         window.pywebview.api.restore_original().then(function(result) {
             if (result) {
+                hideMaskOverlay();
                 $('#preview-img').attr('src', result).on('load', function() {
                     var w = this.naturalWidth;
                     var h = this.naturalHeight;
@@ -556,6 +579,27 @@ function restoreOriginal() {
             }
         });
     }
+}
+
+function flipImage(direction) {
+    var src = $('#preview-img').attr('src');
+    if (!src) {
+        alert('请先打开图片');
+        return;
+    }
+    showProgress('处理中...');
+    var api = direction === 'horizontal' ? 'flip_horizontal' : 'flip_vertical';
+    window.pywebview.api[api](src).then(function(result) {
+        if (result) {
+            $('#preview-img').attr('src', result).on('load', function() {
+                var w = this.naturalWidth;
+                var h = this.naturalHeight;
+                $('#status-size').text(w + ' × ' + h);
+            });
+            $('#status-text').text(direction === 'horizontal' ? '已左右翻转' : '已上下翻转');
+        }
+        hideProgress();
+    });
 }
 
 var selectMode = false;

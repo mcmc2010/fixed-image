@@ -9,6 +9,8 @@
             "description": "自动检测并选择主体",
             "script": "subject.py",
             "params": [
+              { "name": "mode", "label": "模式", "type": "select", "options": ["auto", "manual"], "default": "auto" },
+              { "name": "color", "label": "背景色", "type": "color", "default": "#ffffff" },
               { "name": "tolerance", "label": "容差", "type": "range", "min": 1, "max": 100, "default": 30 }
             ]
           },

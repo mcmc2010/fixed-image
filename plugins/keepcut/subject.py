@@ -4,9 +4,25 @@ from scipy import ndimage
 from io import BytesIO
 import base64
 import os
+from collections import Counter
 
 
-def run(image_src, cache_dir, tolerance=30):
+def get_corner_color(rgb, h, w, sample_size=10):
+    corners = np.vstack([
+        rgb[0:sample_size, 0:sample_size].reshape(-1, 3),
+        rgb[0:sample_size, w-sample_size:w].reshape(-1, 3),
+        rgb[h-sample_size:h, 0:sample_size].reshape(-1, 3),
+        rgb[h-sample_size:h, w-sample_size:w].reshape(-1, 3)
+    ])
+    
+    quantized = (corners // 10) * 10
+    unique_colors, counts = np.unique(quantized, axis=0, return_counts=True)
+    bg_color = unique_colors[np.argmax(counts)] + 5
+    
+    return tuple(bg_color.astype(int))
+
+
+def run(image_src, cache_dir, tolerance=30, mode='auto', color='#ffffff'):
     tolerance = int(tolerance)
     if image_src.startswith('http://127.0.0.1:39090/images/'):
         md5 = image_src.split('/')[-1].replace('.png', '')
@@ -21,6 +37,16 @@ def run(image_src, cache_dir, tolerance=30):
     rgb = data[:,:,:3].astype(float)
     h, w = rgb.shape[:2]
     
+    if mode == 'auto':
+        detected = get_corner_color(rgb, h, w)
+        r_target, g_target, b_target = detected
+        detected_hex = '#{:02x}{:02x}{:02x}'.format(r_target, g_target, b_target)
+    else:
+        r_target = int(color[1:3], 16)
+        g_target = int(color[3:5], 16)
+        b_target = int(color[5:7], 16)
+        detected_hex = color
+    
     visited = np.zeros((h, w), dtype=bool)
     mask = np.zeros((h, w), dtype=bool)
     
@@ -30,7 +56,6 @@ def run(image_src, cache_dir, tolerance=30):
         if visited[y, x]:
             continue
         
-        target_color = rgb[y, x]
         stack = [(y, x)]
         
         while stack:
@@ -39,7 +64,9 @@ def run(image_src, cache_dir, tolerance=30):
             if visited[cy, cx]:
                 continue
             
-            diff = np.sqrt(np.sum((rgb[cy, cx] - target_color) ** 2))
+            diff = np.sqrt((rgb[cy, cx, 0] - r_target)**2 + 
+                          (rgb[cy, cx, 1] - g_target)**2 + 
+                          (rgb[cy, cx, 2] - b_target)**2)
             if diff > tolerance:
                 continue
             
@@ -52,9 +79,7 @@ def run(image_src, cache_dir, tolerance=30):
                     stack.append((ny, nx))
     
     subject_mask = ~mask
-    
     subject_mask = ndimage.binary_fill_holes(subject_mask)
-    
     subject_mask = ndimage.binary_erosion(subject_mask, iterations=2)
     subject_mask = ndimage.binary_dilation(subject_mask, iterations=2)
     
@@ -67,5 +92,6 @@ def run(image_src, cache_dir, tolerance=30):
     
     return {
         'image': image_src,
-        'mask_url': 'http://127.0.0.1:39090/images/' + md5 + '_mask.png'
+        'mask_url': 'http://127.0.0.1:39090/images/' + md5 + '_mask.png',
+        'detected_color': detected_hex
     }

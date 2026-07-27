@@ -65,3 +65,25 @@ def feather_image(image_src, cache_dir, radius=10, blur=3):
     result.save(buffer, format='PNG')
     new_data = base64.b64encode(buffer.getvalue()).decode('utf-8')
     return 'data:image/png;base64,' + new_data
+
+
+def flip_image(image_src, cache_dir, direction='horizontal'):
+    if image_src.startswith('http://127.0.0.1:39090/images/'):
+        filename = image_src.split('/')[-1].replace('.png', '')
+        md5 = filename.split('_')[0]
+        cache_path = os.path.join(cache_dir, filename + '.png')
+        img = Image.open(cache_path).convert('RGBA')
+    else:
+        header, encoded = image_src.split(',', 1)
+        img_data = base64.b64decode(encoded)
+        img = Image.open(BytesIO(img_data)).convert('RGBA')
+    
+    if direction == 'horizontal':
+        result = img.transpose(Image.FLIP_LEFT_RIGHT)
+    else:
+        result = img.transpose(Image.FLIP_TOP_BOTTOM)
+    
+    result_path = os.path.join(cache_dir, md5 + '_result.png')
+    result.save(result_path, 'PNG')
+    
+    return 'http://127.0.0.1:39090/images/' + md5 + '_result.png'

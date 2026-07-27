@@ -9,7 +9,7 @@ import numpy as np
 from io import BytesIO
 from PIL import Image
 from bottle import Bottle, static_file
-from common import remove_background, feather_image, get_plugins, get_tool_info, run_plugin, run_plugin_tool
+from common import remove_background, feather_image, flip_image, get_plugins, get_tool_info, run_plugin, run_plugin_tool
 
 class Api:
     def __init__(self):
@@ -214,6 +214,12 @@ class Api:
 
     def feather_image(self, image_src, radius=10, blur=3):
         return feather_image(image_src, self._cache_dir, radius, blur)
+
+    def flip_horizontal(self, image_src):
+        return flip_image(image_src, self._cache_dir, 'horizontal')
+
+    def flip_vertical(self, image_src):
+        return flip_image(image_src, self._cache_dir, 'vertical')
 
 
 #
